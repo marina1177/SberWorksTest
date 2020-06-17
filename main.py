@@ -36,10 +36,12 @@ class District(object):
 		self.num_fire=0
 
 
-def calc_metric(data, key):
+def calc_metric(street, data, key):
 	# Качество жизни = (#поликлиник (детских) + #образовательных
 	# учреждений + #точек общественного питания) / Относительная
 	# опасность района,
+
+
 	print('Найдено совпадение:')
 	print(f'{data[key]["state"]}, {key}\n')
 	print(f'#поликлиник: {data[key]["num_hosp"]}\n'
@@ -49,7 +51,7 @@ def calc_metric(data, key):
 	if data[key]['num_danger'] == 0:
 		print(f'Качество жизни: нет данных\n')
 	else:
-		q = (data[key]['num_hosp'] + data[key]['num_school'] + data[key]['num_hosp'] + data[key]["num_food"]) / data[key][
+		q = (data[key]['num_hosp'] + data[key]['num_school'] + data[key]['num_food']) / data[key][
 		'num_danger']
 		print(f'Качество жизни: {round(q)}\n')
 
@@ -57,7 +59,25 @@ def calc_metric(data, key):
 		# import plotly.plotly as py
 		from plotly import graph_objs as go
 
+		title = street + ',' +data[key]["state"] + ',' + key
+
 		fig = go.Figure()
+		x = ['hospitals', 'schools', 'food coarts']
+		y = [data[key]["num_hosp"], data[key]["num_school"], data[key]["num_food"]]
+
+		fig.add_trace(go.Bar(x=x, y=y, text=str(y), name= title))
+		xcoord = [0, 1, 2]
+		annotations =[dict(
+			x=xi,
+			y=yi,
+			text=str(yi),
+			xanchor='auto',
+			yanchor='bottom',
+			showarrow=False,
+		) for xi, yi in zip(xcoord, y)]
+
+		fig.update_layout(title_text=title, annotations=annotations)
+		fig.show()
 
 def init_distr(district, AdmArea, Address):
 
@@ -193,16 +213,21 @@ def main():
 		calls_month = json.load(f)
 	fill_danger(districts, calls_states, calls_month)
 
-	for i in districts:
-		print(f'{i}:{districts[i]}')
+	# for i in districts:
+	# 	print(f'{i}:{districts[i]}')
 
 	# Приглашение ввести адрес(улицу)
-	addr = str(input('Введите улицу : \n'))
+	addr = str(input('Введите улицу (например Преображенская улица/Сретенский бульвар/проспект Вернадского/) : \n'))
 	print(addr)
+	cnt = 0
 	for i in districts:
 		if addr in districts[i]['streets']:
-			calc_metric(districts, i)
+			calc_metric(addr, districts, i)
+			cnt +=1
 			break
+	if cnt == 0:
+		print("no data")
+
 
 
 
