@@ -35,6 +35,30 @@ class District(object):
 		self.num_food_court=0
 		self.num_fire=0
 
+
+def calc_metric(data, key):
+	# Качество жизни = (#поликлиник (детских) + #образовательных
+	# учреждений + #точек общественного питания) / Относительная
+	# опасность района,
+	print('Найдено совпадение:')
+	print(f'{data[key]["state"]}, {key}\n')
+	print(f'#поликлиник: {data[key]["num_hosp"]}\n'
+	      f'#образовательных учреждений: {data[key]["num_school"]}\n'
+	      f'#точек общественного питания: {data[key]["num_food"]}\n')
+
+	if data[key]['num_danger'] == 0:
+		print(f'Качество жизни: нет данных\n')
+	else:
+		q = (data[key]['num_hosp'] + data[key]['num_school'] + data[key]['num_hosp'] + data[key]["num_food"]) / data[key][
+		'num_danger']
+		print(f'Качество жизни: {round(q)}\n')
+
+		# ********************VIS**************************************
+		# import plotly.plotly as py
+		from plotly import graph_objs as go
+
+		fig = go.Figure()
+
 def init_distr(district, AdmArea, Address):
 
 	if 'num_food' not in district:
@@ -61,12 +85,7 @@ def init_distr(district, AdmArea, Address):
 			district['streets'].append(street)
 
 
-def parse_input(av):
-	clbrt_data = Input()
-	pass
-
 def fill_danger(districts,state_data, month_data):
-
 	state_calls = {}
 	global_calls = 0
 
@@ -75,18 +94,15 @@ def fill_danger(districts,state_data, month_data):
 			state_calls[i['AdmArea']] = 0
 		if (i['Year'] == 2019):
 			state_calls[i['AdmArea']] += i['Calls']
-	# for i in state_calls:
-	# 	print(f'State: {i}, Calls: {state_calls[i]}')
 	for i in month_data:
 		year = int(i['MonthReport'].split()[1])
 		if year == 2019:
 			#print((year))
 			global_calls += i['Calls']
-
 	for i in districts:
 		if (districts[i]['state'] in state_calls):
 			districts[i]['num_danger'] = round(int(state_calls[districts[i]['state']]*100)/global_calls)
-		print(districts[i])
+
 
 
 def fill_hospis(districts,data):
@@ -143,11 +159,12 @@ def fill_food(data):
 	return (districts)
 
 def main():
-	#представить имеющиеся данные в удобной форме и создать справочные файлы sort_street.xlsx/sort_num.xslx
-	#если такие файлы уже существуют - обработать входные данные
+	#представить имеющиеся данные в удобной форме и создать справочные словари/таблицы(.xlsx)
+	#если такие словари уже существуют - обработать входные данные
 
 	file_path = join(data_dir, data_files[0])
 	with open(file_path) as f:
+	# словарь, в котором хранятся данные для расчета и визуализации метрик
 		districts = fill_food(json.load(f))
 
 	file_path = join(data_dir, data_files[1])
@@ -175,12 +192,21 @@ def main():
 	with open(file_path) as f:
 		calls_month = json.load(f)
 	fill_danger(districts, calls_states, calls_month)
-	# for i in districts:
-	# 	print(f'{i}:{districts[i]}')
 
-	#{'Таганский': [{indx:0}, {state: Центральный}, Streets[], {food_coarts: 10050}, {schools:}, {}, {} ]
-	#
-	#
+	for i in districts:
+		print(f'{i}:{districts[i]}')
+
+	# Приглашение ввести адрес(улицу)
+	addr = str(input('Введите улицу : \n'))
+	print(addr)
+	for i in districts:
+		if addr in districts[i]['streets']:
+			calc_metric(districts, i)
+			break
+
+
+
+
 
 
 #'Address' 'District'
@@ -194,9 +220,3 @@ if __name__ == "__main__":
 	main()
 
 
-	'''path = str(input('Введите улицу : \n'))
-	print('OK')
-	exit(1)
-	if len(sys.argv) <= 2:
-		print("Введите адрес, например: \"Красноказарменная улица, дом 14\"")
-		exit(1)'''
